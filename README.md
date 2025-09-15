@@ -65,7 +65,14 @@ With npm:
 npm run auth
 ```
 
-Or directly from GitHub (after cloning):
+Or directly from GitHub:
+```bash
+bunx --bun gchallen/withings-mcp auth
+# or
+npx gchallen/withings-mcp auth
+```
+
+Or after cloning:
 ```bash
 git clone https://github.com/gchallen/withings-mcp.git
 cd withings-mcp
@@ -82,6 +89,20 @@ This will:
 5. Shut down the temporary server
 
 The authorization is only needed once. The MCP server will automatically refresh tokens as needed.
+
+## CLI Usage
+
+The package provides a unified CLI with the following commands:
+
+```bash
+# Run OAuth authorization (one-time setup)
+bunx --bun gchallen/withings-mcp auth
+
+# Start the MCP server (default command)
+bunx --bun gchallen/withings-mcp
+# or explicitly
+bunx --bun gchallen/withings-mcp server
+```
 
 ## Available Tools
 

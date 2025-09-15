@@ -3,10 +3,7 @@
   "version": "1.0.0",
   "description": "MCP client for retrieving data from Withings smart scale",
   "main": "dist/index.js",
-  "bin": {
-    "withings-mcp": "./dist/index.js",
-    "withings-auth": "./dist/auth.js"
-  },
+  "bin": "./dist/cli.js",
   "scripts": {
     "build": "bun run build:tsc",
     "build:tsc": "tsc",
