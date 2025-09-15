@@ -10,12 +10,24 @@ export declare class WithingsClient {
     saveTokens(): Promise<void>;
     getAccessToken(): string | undefined;
     getRefreshToken(): string | undefined;
+    getDefaultUserAttrib(): number | undefined;
+    getDefaultUnit(): 'metric' | 'imperial';
+    private convertWeight;
+    private convertMass;
     getAuthorizationUrl(): string;
     exchangeCodeForToken(code: string): Promise<void>;
     refreshAccessToken(): Promise<void>;
     makeApiRequest(endpoint: string, params: Record<string, any>): Promise<any>;
-    getMeasures(meastype?: number[], startdate?: number, enddate?: number): Promise<WithingsMeasureGroup[]>;
-    getLatestWeight(): Promise<number | null>;
-    getBodyComposition(): Promise<Record<string, number | string>>;
+    getMeasures(meastype?: number[], startdate?: number, enddate?: number, userAttrib?: number): Promise<WithingsMeasureGroup[]>;
+    getLatestWeight(userAttrib?: number, unitSystem?: 'metric' | 'imperial'): Promise<{
+        value: number;
+        unit: string;
+    } | null>;
+    getBodyComposition(userAttrib?: number, unitSystem?: 'metric' | 'imperial'): Promise<Record<string, number | string>>;
+    getAvailableUsers(): Promise<{
+        attrib: number;
+        count: number;
+        latestDate: string;
+    }[]>;
 }
 //# sourceMappingURL=withingsClient.d.ts.map

@@ -16,7 +16,7 @@ export interface WithingsMeasure {
 
 export interface WithingsMeasureGroup {
   grpid: number;
-  attrib: number;
+  attrib: number; // 0 = device owner, 1+ = other users, 2 = manual entry, 4 = automatic detection
   date: number;
   created: number;
   modified: number;

@@ -53,7 +53,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       description: 'Get the latest weight measurement from Withings scale',
       inputSchema: {
         type: 'object',
-        properties: {},
+        properties: {
+          userAttrib: {
+            type: 'number',
+            description: 'User attribution (0=device owner, 1+=other users). If not specified, returns data from all users.',
+          },
+          unitSystem: {
+            type: 'string',
+            enum: ['metric', 'imperial'],
+            description: 'Unit system for measurements (metric=kg, imperial=lb). If not specified, uses WITHINGS_UNIT_SYSTEM environment variable or defaults to metric.',
+          },
+        },
       },
     },
     {
@@ -62,7 +72,17 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         'Get complete body composition data including weight, fat mass, muscle mass, bone mass, hydration, and more',
       inputSchema: {
         type: 'object',
-        properties: {},
+        properties: {
+          userAttrib: {
+            type: 'number',
+            description: 'User attribution (0=device owner, 1+=other users). If not specified, returns data from all users.',
+          },
+          unitSystem: {
+            type: 'string',
+            enum: ['metric', 'imperial'],
+            description: 'Unit system for measurements (metric=kg, imperial=lb). If not specified, uses WITHINGS_UNIT_SYSTEM environment variable or defaults to metric.',
+          },
+        },
       },
     },
     {
@@ -85,7 +105,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
             type: 'string',
             description: 'End date in ISO format',
           },
+          userAttrib: {
+            type: 'number',
+            description: 'User attribution (0=device owner, 1+=other users). If not specified, returns data from all users.',
+          },
         },
+      },
+    },
+    {
+      name: 'withings_get_users',
+      description: 'Get list of users who have measurements on the Withings scale',
+      inputSchema: {
+        type: 'object',
+        properties: {},
       },
     },
   ];
@@ -114,54 +146,64 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   try {
     switch (name) {
       case 'withings_get_weight': {
-        const weight = await withingsClient.getLatestWeight();
+        const { userAttrib, unitSystem } = args as { userAttrib?: number; unitSystem?: 'metric' | 'imperial' };
+        const effectiveUserAttrib = userAttrib ?? withingsClient.getDefaultUserAttrib();
+        const weight = await withingsClient.getLatestWeight(userAttrib, unitSystem);
         if (weight === null) {
+          const userText = effectiveUserAttrib !== undefined ? ` for user ${effectiveUserAttrib}` : '';
           return {
             content: [
               {
                 type: 'text',
-                text: 'No weight measurements found.',
+                text: `No weight measurements found${userText}.`,
               },
             ],
           };
         }
+        const userText = effectiveUserAttrib !== undefined ? ` (user ${effectiveUserAttrib})` : '';
         return {
           content: [
             {
               type: 'text',
-              text: `Latest weight: ${weight.toFixed(2)} kg`,
+              text: `Latest weight: ${weight.value.toFixed(2)} ${weight.unit}${userText}`,
             },
           ],
         };
       }
 
       case 'withings_get_body_composition': {
-        const composition = await withingsClient.getBodyComposition();
+        const { userAttrib, unitSystem } = args as { userAttrib?: number; unitSystem?: 'metric' | 'imperial' };
+        const effectiveUserAttrib = userAttrib ?? withingsClient.getDefaultUserAttrib();
+        const composition = await withingsClient.getBodyComposition(userAttrib, unitSystem);
         const formatted = JSON.stringify(composition, null, 2);
+        const userText = effectiveUserAttrib !== undefined ? ` (user ${effectiveUserAttrib})` : '';
         return {
           content: [
             {
               type: 'text',
-              text: `Body Composition:\n${formatted}`,
+              text: `Body Composition${userText}:\n${formatted}`,
             },
           ],
         };
       }
 
       case 'withings_get_measurements': {
-        const { measureTypes, startDate, endDate } = args as {
+        const { measureTypes, startDate, endDate, userAttrib } = args as {
           measureTypes?: number[];
           startDate?: string;
           endDate?: string;
+          userAttrib?: number;
         };
 
         const startTimestamp = startDate ? Math.floor(new Date(startDate).getTime() / 1000) : undefined;
         const endTimestamp = endDate ? Math.floor(new Date(endDate).getTime() / 1000) : undefined;
 
+        const effectiveUserAttrib = userAttrib ?? withingsClient.getDefaultUserAttrib();
         const measurements = await withingsClient.getMeasures(
           measureTypes,
           startTimestamp,
-          endTimestamp
+          endTimestamp,
+          effectiveUserAttrib
         );
 
         return {
@@ -169,6 +211,26 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: JSON.stringify(measurements, null, 2),
+            },
+          ],
+        };
+      }
+
+      case 'withings_get_users': {
+        const users = await withingsClient.getAvailableUsers();
+        const formatted = users.map(user => {
+          const userType = user.attrib === 0 ? 'Device Owner' :
+                          user.attrib === 2 ? 'Manual Entry' :
+                          user.attrib === 4 ? 'Auto Detection' :
+                          `User ${user.attrib}`;
+          return `• User ${user.attrib} (${userType}): ${user.count} measurements, latest: ${user.latestDate}`;
+        }).join('\n');
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `Available Users:\n${formatted}`,
             },
           ],
         };

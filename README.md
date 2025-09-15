@@ -45,6 +45,8 @@ Create a `.env` file with your Withings credentials:
 WITHINGS_CLIENT_ID=your_client_id
 WITHINGS_CLIENT_SECRET=your_client_secret
 WITHINGS_REDIRECT_URI=http://localhost:3000/callback
+WITHINGS_USER_ATTRIB=0  # Optional: Pin to specific user (0=device owner, 1+=other users)
+WITHINGS_UNIT_SYSTEM=imperial  # Optional: Set default units (metric=kg, imperial=lb)
 ```
 
 ### 2. Authorization (One-time setup)
@@ -121,6 +123,34 @@ Parameters:
 - `measureTypes` (optional): Array of measurement type IDs
 - `startDate` (optional): Start date in ISO format
 - `endDate` (optional): End date in ISO format
+- `userAttrib` (optional): User attribution filter
+
+### `withings_get_users`
+Get list of users who have measurements on the Withings scale.
+
+Returns user statistics including measurement counts and latest measurement dates.
+
+## User Filtering
+
+All tools support filtering by user attribution:
+- `userAttrib: 0` - Device owner (primary user)
+- `userAttrib: 1+` - Other users
+- `userAttrib: 2` - Manual entries
+- `userAttrib: 4` - Automatic detection
+
+You can set `WITHINGS_USER_ATTRIB` environment variable to automatically filter all requests to a specific user. If not set, data from all users will be returned (unless explicitly filtered).
+
+## Unit System
+
+All measurement tools support both metric and imperial units:
+- `unitSystem: "metric"` - Returns weights in kg
+- `unitSystem: "imperial"` - Returns weights in lb
+
+You can set `WITHINGS_UNIT_SYSTEM` environment variable to automatically use your preferred units for all requests:
+- `WITHINGS_UNIT_SYSTEM=metric` - Default, returns kg/cm
+- `WITHINGS_UNIT_SYSTEM=imperial` - Returns lb/inches
+
+If not set, defaults to metric. You can override on a per-request basis by passing the `unitSystem` parameter to individual tools.
 
 ## Usage with Claude Desktop
 
@@ -138,7 +168,9 @@ With Bun (recommended):
         "WITHINGS_CLIENT_SECRET": "your_client_secret",
         "WITHINGS_REDIRECT_URI": "http://localhost:3000/callback",
         "WITHINGS_ACCESS_TOKEN": "your_access_token",
-        "WITHINGS_REFRESH_TOKEN": "your_refresh_token"
+        "WITHINGS_REFRESH_TOKEN": "your_refresh_token",
+        "WITHINGS_USER_ATTRIB": "0",
+        "WITHINGS_UNIT_SYSTEM": "imperial"
       }
     }
   }
@@ -157,7 +189,9 @@ Or with npm:
         "WITHINGS_CLIENT_SECRET": "your_client_secret",
         "WITHINGS_REDIRECT_URI": "http://localhost:3000/callback",
         "WITHINGS_ACCESS_TOKEN": "your_access_token",
-        "WITHINGS_REFRESH_TOKEN": "your_refresh_token"
+        "WITHINGS_REFRESH_TOKEN": "your_refresh_token",
+        "WITHINGS_USER_ATTRIB": "0",
+        "WITHINGS_UNIT_SYSTEM": "imperial"
       }
     }
   }
