@@ -7,31 +7,36 @@ MCP (Model Context Protocol) client for retrieving data from Withings smart scal
 1. Create a Withings Developer account at https://developer.withings.com/
 2. Create an application to get your Client ID and Client Secret
 3. Set up your redirect URI (default: `http://localhost:3000/callback`)
-
-## Prerequisites
-
-- [Bun](https://bun.sh/) runtime (recommended) or Node.js
+4. [Bun](https://bun.sh/) runtime (recommended) or Node.js
 
 ## Installation
+
+### Install from GitHub
 
 With Bun (recommended):
 
 ```bash
-bun install withings-mcp
+bun install git+https://github.com/gchallen/withings-mcp.git
 ```
 
 Or with npm:
 
 ```bash
-npm install withings-mcp
+npm install git+https://github.com/gchallen/withings-mcp.git
 ```
 
-Or use directly with bunx/npx:
+### Or run directly from GitHub
+
+With Bun (recommended):
 
 ```bash
-bunx withings-mcp
-# or
-npx withings-mcp
+bunx --bun gchallen/withings-mcp
+```
+
+Or with npm/npx:
+
+```bash
+npx gchallen/withings-mcp
 ```
 
 ## Setup
@@ -60,11 +65,13 @@ With npm:
 npm run auth
 ```
 
-Or directly:
+Or directly from GitHub (after cloning):
 ```bash
-bunx withings-auth
+git clone https://github.com/gchallen/withings-mcp.git
+cd withings-mcp
+bun run auth
 # or
-npx withings-auth
+npm run auth
 ```
 
 This will:
@@ -111,7 +118,7 @@ With Bun (recommended):
   "mcpServers": {
     "withings": {
       "command": "bunx",
-      "args": ["withings-mcp"],
+      "args": ["--bun", "gchallen/withings-mcp"],
       "env": {
         "WITHINGS_CLIENT_ID": "your_client_id",
         "WITHINGS_CLIENT_SECRET": "your_client_secret",
@@ -130,7 +137,7 @@ Or with npm:
   "mcpServers": {
     "withings": {
       "command": "npx",
-      "args": ["withings-mcp"],
+      "args": ["gchallen/withings-mcp"],
       "env": {
         "WITHINGS_CLIENT_ID": "your_client_id",
         "WITHINGS_CLIENT_SECRET": "your_client_secret",
@@ -146,6 +153,16 @@ Or with npm:
 **Note:** After running the auth command, the access and refresh tokens will be saved to your `.env` file. Copy these values to your Claude Desktop configuration.
 
 ## Development
+
+### Clone the Repository
+
+For local development or if you prefer to clone the repository:
+
+```bash
+git clone https://github.com/gchallen/withings-mcp.git
+cd withings-mcp
+bun install  # or npm install
+```
 
 ### Build
 ```bash
