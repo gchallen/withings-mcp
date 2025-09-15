@@ -6,7 +6,7 @@
   "bin": "./bin/cli.js",
   "scripts": {
     "build": "tsc",
-    "prepare": "npm run build",
+    "preinstall": "npm run build",
     "postinstall": "npm run build",
     "dev": "bun src/index.ts",
     "start": "bun src/index.ts",
