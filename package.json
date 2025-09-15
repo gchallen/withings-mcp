@@ -6,8 +6,6 @@
   "bin": "./bin/cli.js",
   "scripts": {
     "build": "tsc",
-    "preinstall": "npm run build",
-    "postinstall": "npm run build",
     "dev": "bun src/index.ts",
     "start": "bun src/index.ts",
     "login": "bun src/login.ts",
