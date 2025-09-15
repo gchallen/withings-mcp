@@ -8,15 +8,29 @@ MCP (Model Context Protocol) client for retrieving data from Withings smart scal
 2. Create an application to get your Client ID and Client Secret
 3. Set up your redirect URI (default: `http://localhost:3000/callback`)
 
+## Prerequisites
+
+- [Bun](https://bun.sh/) runtime (recommended) or Node.js
+
 ## Installation
+
+With Bun (recommended):
+
+```bash
+bun install withings-mcp
+```
+
+Or with npm:
 
 ```bash
 npm install withings-mcp
 ```
 
-Or use directly with npx:
+Or use directly with bunx/npx:
 
 ```bash
+bunx withings-mcp
+# or
 npx withings-mcp
 ```
 
@@ -36,13 +50,20 @@ WITHINGS_REDIRECT_URI=http://localhost:3000/callback
 
 Before using the MCP server, you need to authorize access to your Withings data. Run the authorization tool:
 
+With Bun:
+```bash
+bun run auth
+```
+
+With npm:
 ```bash
 npm run auth
 ```
 
-Or with npx:
-
+Or directly:
 ```bash
+bunx withings-auth
+# or
 npx withings-auth
 ```
 
@@ -84,6 +105,26 @@ Parameters:
 
 Add the server to your Claude Desktop configuration:
 
+With Bun (recommended):
+```json
+{
+  "mcpServers": {
+    "withings": {
+      "command": "bunx",
+      "args": ["withings-mcp"],
+      "env": {
+        "WITHINGS_CLIENT_ID": "your_client_id",
+        "WITHINGS_CLIENT_SECRET": "your_client_secret",
+        "WITHINGS_REDIRECT_URI": "http://localhost:3000/callback",
+        "WITHINGS_ACCESS_TOKEN": "your_access_token",
+        "WITHINGS_REFRESH_TOKEN": "your_refresh_token"
+      }
+    }
+  }
+}
+```
+
+Or with npm:
 ```json
 {
   "mcpServers": {
@@ -102,29 +143,29 @@ Add the server to your Claude Desktop configuration:
 }
 ```
 
-**Note:** After running `npx withings-auth`, the access and refresh tokens will be saved to your `.env` file. Copy these values to your Claude Desktop configuration.
+**Note:** After running the auth command, the access and refresh tokens will be saved to your `.env` file. Copy these values to your Claude Desktop configuration.
 
 ## Development
 
 ### Build
 ```bash
-npm run build
+bun run build  # or npm run build
 ```
 
 ### Run in development mode
 ```bash
-npm run dev
+bun run dev    # or npm run dev
 ```
 
 ### Run tests
 ```bash
-npm test
+bun test       # or npm test
 ```
 
 ### Lint and format
 ```bash
-npm run lint
-npm run format
+bun run lint   # or npm run lint
+bun run format # or npm run format
 ```
 
 ## License

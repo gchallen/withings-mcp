@@ -1,4 +1,4 @@
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect } from 'bun:test';
 import { MeasureType } from '../types.js';
 
 describe('WithingsClient Types', () => {

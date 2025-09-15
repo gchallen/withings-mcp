@@ -18,7 +18,6 @@ export default [
         Buffer: 'readonly',
         __dirname: 'readonly',
         __filename: 'readonly',
-        jest: 'readonly',
         describe: 'readonly',
         it: 'readonly',
         expect: 'readonly',

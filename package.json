@@ -8,15 +8,16 @@
     "withings-auth": "./dist/auth.js"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsx src/index.ts",
-    "start": "node dist/index.js",
-    "auth": "tsx src/auth.ts",
+    "build": "bun run build:tsc",
+    "build:tsc": "tsc",
+    "dev": "bun run src/index.ts",
+    "start": "bun run dist/index.js",
+    "auth": "bun run src/auth.ts",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts",
-    "test": "NODE_OPTIONS='--experimental-vm-modules' jest",
-    "test:watch": "NODE_OPTIONS='--experimental-vm-modules' jest --watch",
-    "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage"
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage"
   },
   "keywords": [
     "mcp",
@@ -30,19 +31,16 @@
   "type": "module",
   "devDependencies": {
     "@eslint/js": "^9.35.0",
-    "@jest/globals": "^30.1.2",
-    "@types/jest": "^30.0.0",
     "@types/node": "^24.4.0",
     "@types/open": "^6.1.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.43.0",
+    "bun-types": "^1.2.22",
     "eslint": "^9.35.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
-    "jest": "^30.1.3",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
-    "ts-jest": "^29.4.1",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   },
