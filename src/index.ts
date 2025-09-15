@@ -49,28 +49,6 @@ async function initializeClient(): Promise<WithingsClient> {
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   const tools: Tool[] = [
     {
-      name: 'withings_authorize',
-      description: 'Get authorization URL for Withings OAuth2 flow',
-      inputSchema: {
-        type: 'object',
-        properties: {},
-      },
-    },
-    {
-      name: 'withings_complete_auth',
-      description: 'Complete Withings authorization with OAuth2 code',
-      inputSchema: {
-        type: 'object',
-        properties: {
-          code: {
-            type: 'string',
-            description: 'Authorization code from OAuth2 callback',
-          },
-        },
-        required: ['code'],
-      },
-    },
-    {
       name: 'withings_get_weight',
       description: 'Get the latest weight measurement from Withings scale',
       inputSchema: {
@@ -135,31 +113,6 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (name) {
-      case 'withings_authorize': {
-        const authUrl = withingsClient.getAuthorizationUrl();
-        return {
-          content: [
-            {
-              type: 'text',
-              text: `Please visit this URL to authorize access to your Withings data:\n${authUrl}\n\nAfter authorization, you'll receive a code. Use the withings_complete_auth tool with that code.`,
-            },
-          ],
-        };
-      }
-
-      case 'withings_complete_auth': {
-        const { code } = args as { code: string };
-        await withingsClient.exchangeCodeForToken(code);
-        return {
-          content: [
-            {
-              type: 'text',
-              text: 'Authorization successful! Your tokens have been saved.',
-            },
-          ],
-        };
-      }
-
       case 'withings_get_weight': {
         const weight = await withingsClient.getLatestWeight();
         if (weight === null) {

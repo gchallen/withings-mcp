@@ -20,7 +20,9 @@ Or use directly with npx:
 npx withings-mcp
 ```
 
-## Configuration
+## Setup
+
+### 1. Configuration
 
 Create a `.env` file with your Withings credentials:
 
@@ -30,18 +32,32 @@ WITHINGS_CLIENT_SECRET=your_client_secret
 WITHINGS_REDIRECT_URI=http://localhost:3000/callback
 ```
 
+### 2. Authorization (One-time setup)
+
+Before using the MCP server, you need to authorize access to your Withings data. Run the authorization tool:
+
+```bash
+npm run auth
+```
+
+Or with npx:
+
+```bash
+npx withings-auth
+```
+
+This will:
+1. Start a temporary local server on port 3000
+2. Open your browser to the Withings authorization page
+3. Handle the OAuth callback automatically
+4. Save your access and refresh tokens to the `.env` file
+5. Shut down the temporary server
+
+The authorization is only needed once. The MCP server will automatically refresh tokens as needed.
+
 ## Available Tools
 
 The MCP server provides the following tools:
-
-### `withings_authorize`
-Get the authorization URL to start the OAuth2 flow. Visit this URL to authorize access to your Withings data.
-
-### `withings_complete_auth`
-Complete the authorization process with the code received from the OAuth2 callback.
-
-Parameters:
-- `code`: Authorization code from OAuth2 callback
 
 ### `withings_get_weight`
 Get the latest weight measurement from your Withings scale.
@@ -77,12 +93,16 @@ Add the server to your Claude Desktop configuration:
       "env": {
         "WITHINGS_CLIENT_ID": "your_client_id",
         "WITHINGS_CLIENT_SECRET": "your_client_secret",
-        "WITHINGS_REDIRECT_URI": "http://localhost:3000/callback"
+        "WITHINGS_REDIRECT_URI": "http://localhost:3000/callback",
+        "WITHINGS_ACCESS_TOKEN": "your_access_token",
+        "WITHINGS_REFRESH_TOKEN": "your_refresh_token"
       }
     }
   }
 }
 ```
+
+**Note:** After running `npx withings-auth`, the access and refresh tokens will be saved to your `.env` file. Copy these values to your Claude Desktop configuration.
 
 ## Development
 

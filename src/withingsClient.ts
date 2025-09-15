@@ -22,6 +22,13 @@ export class WithingsClient {
   }
 
   async loadTokens(): Promise<void> {
+    // Load from environment variables first, then fallback to file
+    if (process.env.WITHINGS_ACCESS_TOKEN && process.env.WITHINGS_REFRESH_TOKEN) {
+      this.config.accessToken = process.env.WITHINGS_ACCESS_TOKEN;
+      this.config.refreshToken = process.env.WITHINGS_REFRESH_TOKEN;
+      return;
+    }
+
     try {
       const data = await fs.readFile(this.configPath, 'utf-8');
       const tokens = JSON.parse(data);
@@ -42,6 +49,14 @@ export class WithingsClient {
         refreshToken: this.config.refreshToken,
       })
     );
+  }
+
+  getAccessToken(): string | undefined {
+    return this.config.accessToken;
+  }
+
+  getRefreshToken(): string | undefined {
+    return this.config.refreshToken;
   }
 
   getAuthorizationUrl(): string {
