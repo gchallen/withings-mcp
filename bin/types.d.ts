@@ -49,21 +49,24 @@ export interface TokenResponse {
 export declare enum MeasureType {
     WEIGHT = 1,
     HEIGHT = 4,
-    FAT_MASS_WEIGHT = 5,
-    MUSCLE_MASS = 6,
+    FAT_FREE_MASS = 5,// Fat Free Mass (kg) - per official documentation
+    FAT_RATIO_PERCENTAGE = 6,// Fat Ratio (%) - per official documentation
     HYDRATION = 7,
-    BONE_MASS = 8,
+    FAT_MASS_WEIGHT = 8,// Fat Mass Weight (kg) - per official documentation
     PULSE_WAVE_VELOCITY = 9,
     HEART_RATE = 11,
     TEMPERATURE = 12,
     SPO2 = 54,
     BODY_TEMPERATURE = 71,
     SKIN_TEMPERATURE = 73,
-    MUSCLE_MASS_PERCENTAGE = 76,
+    MUSCLE_MASS_WEIGHT = 76,// Muscle Mass (kg) - per official documentation
     HYDRATION_PERCENTAGE = 77,
-    BONE_MASS_PERCENTAGE = 88,
+    BONE_MASS = 88,// Bone Mass (kg) - per official documentation
     METABOLIC_AGE = 155,
     VISCERAL_FAT_INDEX = 158,
-    FAT_MASS_PERCENTAGE = 160
+    FAT_MASS_PERCENTAGE = 160,
+    UNKNOWN_170 = 170,// Possibly visceral fat index - shows 2.6
+    UNKNOWN_226 = 226,// Unknown large value - shows 1922
+    UNKNOWN_227 = 227
 }
 //# sourceMappingURL=types.d.ts.map

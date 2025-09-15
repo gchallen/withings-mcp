@@ -261,16 +261,13 @@ export class WithingsClient {
     const effectiveUnitSystem = unitSystem ?? this.getDefaultUnit();
     const measTypes = [
       MeasureType.WEIGHT,
-      MeasureType.FAT_MASS_WEIGHT,
-      MeasureType.FAT_MASS_PERCENTAGE,
-      MeasureType.MUSCLE_MASS,
-      MeasureType.MUSCLE_MASS_PERCENTAGE,
-      MeasureType.BONE_MASS,
-      MeasureType.BONE_MASS_PERCENTAGE,
-      MeasureType.HYDRATION,
-      MeasureType.HYDRATION_PERCENTAGE,
-      MeasureType.VISCERAL_FAT_INDEX,
-      MeasureType.METABOLIC_AGE,
+      MeasureType.FAT_FREE_MASS, // Type 5 - Fat Free Mass (kg)
+      MeasureType.FAT_RATIO_PERCENTAGE, // Type 6 - Fat Ratio (%)
+      MeasureType.FAT_MASS_WEIGHT, // Type 8 - Fat Mass Weight (kg)
+      MeasureType.MUSCLE_MASS_WEIGHT, // Type 76 - Muscle Mass (kg)
+      MeasureType.HYDRATION_PERCENTAGE, // Type 77
+      MeasureType.BONE_MASS, // Type 88 - Bone Mass (kg)
+      MeasureType.UNKNOWN_170, // Type 170 - possibly visceral fat
     ];
 
     const measures = await this.getMeasures(measTypes, undefined, undefined, effectiveUserAttrib);
@@ -303,39 +300,47 @@ export class WithingsClient {
           const weight = this.convertWeight(value, effectiveUnitSystem);
           composition[`weight_${weight.unit}`] = parseFloat(weight.value.toFixed(2));
           break;
-        case MeasureType.FAT_MASS_WEIGHT:
+
+        case MeasureType.FAT_FREE_MASS: // Type 5 - Fat Free Mass (kg)
+          const fatFreeMass = this.convertMass(value, effectiveUnitSystem);
+          composition[`fat_free_mass_${fatFreeMass.unit}`] = parseFloat(fatFreeMass.value.toFixed(2));
+          break;
+
+        case MeasureType.FAT_RATIO_PERCENTAGE: // Type 6 - Fat Ratio (%) - official documentation
+          composition.fat_percentage = parseFloat(value.toFixed(1));
+          break;
+
+        case MeasureType.FAT_MASS_WEIGHT: // Type 8 - Fat Mass Weight (kg)
           const fatMass = this.convertMass(value, effectiveUnitSystem);
           composition[`fat_mass_${fatMass.unit}`] = parseFloat(fatMass.value.toFixed(2));
           break;
-        case MeasureType.FAT_MASS_PERCENTAGE:
-          composition.fat_percentage = parseFloat(value.toFixed(1));
-          break;
-        case MeasureType.MUSCLE_MASS:
+
+        case MeasureType.MUSCLE_MASS_WEIGHT: // Type 76 - Muscle Mass (kg)
           const muscleMass = this.convertMass(value, effectiveUnitSystem);
           composition[`muscle_mass_${muscleMass.unit}`] = parseFloat(muscleMass.value.toFixed(2));
+          // Calculate muscle percentage from mass
+          const weightKgForMuscle = latestMeasurements[MeasureType.WEIGHT]?.value;
+          if (weightKgForMuscle) {
+            composition.muscle_percentage = parseFloat((value / weightKgForMuscle * 100).toFixed(1));
+          }
           break;
-        case MeasureType.MUSCLE_MASS_PERCENTAGE:
-          composition.muscle_percentage = parseFloat(value.toFixed(1));
-          break;
-        case MeasureType.BONE_MASS:
-          const boneMass = this.convertMass(value, effectiveUnitSystem);
-          composition[`bone_mass_${boneMass.unit}`] = parseFloat(boneMass.value.toFixed(2));
-          break;
-        case MeasureType.BONE_MASS_PERCENTAGE:
-          composition.bone_percentage = parseFloat(value.toFixed(1));
-          break;
-        case MeasureType.HYDRATION:
-          const hydration = this.convertMass(value, effectiveUnitSystem);
-          composition[`hydration_${hydration.unit}`] = parseFloat(hydration.value.toFixed(2));
-          break;
-        case MeasureType.HYDRATION_PERCENTAGE:
+
+        case MeasureType.HYDRATION_PERCENTAGE: // Type 77
           composition.hydration_percentage = parseFloat(value.toFixed(1));
           break;
-        case MeasureType.VISCERAL_FAT_INDEX:
-          composition.visceral_fat_index = parseFloat(value.toFixed(1));
+
+        case MeasureType.BONE_MASS: // Type 88 - Bone Mass (kg) - official documentation
+          const boneMass = this.convertMass(value, effectiveUnitSystem);
+          composition[`bone_mass_${boneMass.unit}`] = parseFloat(boneMass.value.toFixed(2));
+          // Calculate bone percentage from mass
+          const weightKgForBone = latestMeasurements[MeasureType.WEIGHT]?.value;
+          if (weightKgForBone) {
+            composition.bone_percentage = parseFloat((value / weightKgForBone * 100).toFixed(1));
+          }
           break;
-        case MeasureType.METABOLIC_AGE:
-          composition.metabolic_age = Math.round(value);
+
+        case MeasureType.UNKNOWN_170: // Type 170 - possibly visceral fat index
+          composition.visceral_fat_index = parseFloat(value.toFixed(1));
           break;
       }
     }
@@ -371,5 +376,40 @@ export class WithingsClient {
       count: stats.count,
       latestDate: new Date(stats.latestDate * 1000).toISOString(),
     })).sort((a, b) => b.latestDate.localeCompare(a.latestDate));
+  }
+
+  async getUserSettings(): Promise<Record<string, string | number | boolean | undefined>> {
+    // Get timezone from API response and combine with environment settings
+    const response = await this.makeApiRequest('/measure', {
+      action: 'getmeas',
+      meastype: '1', // Weight only for lightweight call
+      limit: 1
+    });
+
+    const settings: Record<string, string | number | boolean | undefined> = {};
+
+    // Timezone from API response
+    if (response.body?.timezone) {
+      settings.timezone = response.body.timezone;
+    }
+
+    // Unit system from environment or default
+    settings.unit_system = this.getDefaultUnit();
+
+    // Default user attribution from environment
+    const userAttrib = this.getDefaultUserAttrib();
+    if (userAttrib !== undefined) {
+      settings.default_user_attrib = userAttrib;
+    }
+
+    // Client configuration (without secrets)
+    settings.client_id = this.config.clientId;
+    settings.redirect_uri = this.config.redirectUri;
+
+    // Token status
+    settings.has_access_token = !!this.config.accessToken;
+    settings.has_refresh_token = !!this.config.refreshToken;
+
+    return settings;
   }
 }

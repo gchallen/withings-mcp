@@ -29,5 +29,6 @@ export declare class WithingsClient {
         count: number;
         latestDate: string;
     }[]>;
+    getUserSettings(): Promise<Record<string, string | number | boolean | undefined>>;
 }
 //# sourceMappingURL=withingsClient.d.ts.map

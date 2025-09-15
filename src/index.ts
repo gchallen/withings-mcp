@@ -120,6 +120,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         properties: {},
       },
     },
+    {
+      name: 'withings_get_user_settings',
+      description: 'Get user settings including timezone, unit preferences, and client configuration',
+      inputSchema: {
+        type: 'object',
+        properties: {},
+      },
+    },
   ];
 
   return { tools };
@@ -231,6 +239,29 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: 'text',
               text: `Available Users:\n${formatted}`,
+            },
+          ],
+        };
+      }
+
+      case 'withings_get_user_settings': {
+        const settings = await withingsClient.getUserSettings();
+
+        const formatted = [
+          `Timezone: ${settings.timezone}`,
+          `Unit System: ${settings.unit_system}`,
+          `Default User: ${settings.default_user_attrib !== undefined ? settings.default_user_attrib : 'All users'}`,
+          `Client ID: ${settings.client_id}`,
+          `Redirect URI: ${settings.redirect_uri}`,
+          `Access Token: ${settings.has_access_token ? 'Present' : 'Missing'}`,
+          `Refresh Token: ${settings.has_refresh_token ? 'Present' : 'Missing'}`,
+        ].join('\n');
+
+        return {
+          content: [
+            {
+              type: 'text',
+              text: `User Settings:\n${formatted}`,
             },
           ],
         };
