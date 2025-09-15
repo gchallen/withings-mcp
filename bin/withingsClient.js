@@ -159,7 +159,7 @@ export class WithingsClient {
             throw error;
         }
     }
-    async getMeasures(meastype, startdate, enddate, userAttrib) {
+    async getMeasures(meastype, startdate, enddate, userAttrib, limit, offset) {
         const params = {
             action: 'getmeas',
         };
@@ -172,6 +172,12 @@ export class WithingsClient {
         if (enddate) {
             params.enddate = enddate;
         }
+        if (limit !== undefined) {
+            params.limit = limit;
+        }
+        if (offset !== undefined) {
+            params.offset = offset;
+        }
         const response = await this.makeApiRequest('/measure', params);
         if (response.status !== 0) {
             throw new Error(`API Error: ${response.error || 'Unknown error'}`);
@@ -182,6 +188,44 @@ export class WithingsClient {
             measureGroups = measureGroups.filter(group => group.attrib === userAttrib);
         }
         return measureGroups;
+    }
+    async getMeasuresWithPagination(meastype, startdate, enddate, userAttrib, limit, offset) {
+        const params = {
+            action: 'getmeas',
+        };
+        if (meastype && meastype.length > 0) {
+            params.meastype = meastype.join(',');
+        }
+        if (startdate) {
+            params.startdate = startdate;
+        }
+        if (enddate) {
+            params.enddate = enddate;
+        }
+        if (limit !== undefined) {
+            params.limit = limit;
+        }
+        if (offset !== undefined) {
+            params.offset = offset;
+        }
+        const response = await this.makeApiRequest('/measure', params);
+        if (response.status !== 0) {
+            throw new Error(`API Error: ${response.error || 'Unknown error'}`);
+        }
+        let measureGroups = response.body?.measuregrps || [];
+        // Filter by user attribution if specified
+        if (userAttrib !== undefined) {
+            measureGroups = measureGroups.filter(group => group.attrib === userAttrib);
+        }
+        return {
+            measures: measureGroups,
+            pagination: {
+                limit,
+                offset,
+                more: response.body?.more || false,
+                total_returned: measureGroups.length,
+            },
+        };
     }
     async getLatestWeight(userAttrib, unitSystem) {
         const effectiveUserAttrib = userAttrib ?? this.getDefaultUserAttrib();
@@ -195,7 +239,13 @@ export class WithingsClient {
             return null;
         }
         const weightKg = weightMeasure.value * Math.pow(10, weightMeasure.unit);
-        return this.convertWeight(weightKg, unitSystem);
+        const weightData = this.convertWeight(weightKg, unitSystem);
+        return {
+            value: weightData.value,
+            unit: weightData.unit,
+            date: new Date(latestGroup.date * 1000).toISOString(),
+            timestamp: latestGroup.date
+        };
     }
     async getBodyComposition(userAttrib, unitSystem) {
         const effectiveUserAttrib = userAttrib ?? this.getDefaultUserAttrib();
@@ -277,6 +327,7 @@ export class WithingsClient {
         if (Object.keys(latestMeasurements).length > 0) {
             const mostRecentDate = Math.max(...Object.values(latestMeasurements).map(m => m.date));
             composition.measurement_date = new Date(mostRecentDate * 1000).toISOString();
+            composition.measurement_timestamp = mostRecentDate;
         }
         return composition;
     }

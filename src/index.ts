@@ -87,7 +87,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     },
     {
       name: 'withings_get_measurements',
-      description: 'Get raw measurement data with optional filters',
+      description: 'Get raw measurement data with optional filters and pagination',
       inputSchema: {
         type: 'object',
         properties: {
@@ -108,6 +108,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           userAttrib: {
             type: 'number',
             description: 'User attribution (0=device owner, 1+=other users). If not specified, returns data from all users.',
+          },
+          limit: {
+            type: 'number',
+            description: 'Maximum number of measurement groups to return (e.g., 10, 50). Useful for pagination.',
+          },
+          offset: {
+            type: 'number',
+            description: 'Number of measurement groups to skip. Use with limit for pagination (e.g., offset=20, limit=10 gets results 21-30).',
           },
         },
       },
@@ -173,7 +181,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [
             {
               type: 'text',
-              text: `Latest weight: ${weight.value.toFixed(2)} ${weight.unit}${userText}`,
+              text: `Latest weight: ${weight.value.toFixed(2)} ${weight.unit}${userText}\nMeasured: ${weight.date}\nTimestamp: ${weight.timestamp}`,
             },
           ],
         };
@@ -196,29 +204,43 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       }
 
       case 'withings_get_measurements': {
-        const { measureTypes, startDate, endDate, userAttrib } = args as {
+        const { measureTypes, startDate, endDate, userAttrib, limit, offset } = args as {
           measureTypes?: number[];
           startDate?: string;
           endDate?: string;
           userAttrib?: number;
+          limit?: number;
+          offset?: number;
         };
 
         const startTimestamp = startDate ? Math.floor(new Date(startDate).getTime() / 1000) : undefined;
         const endTimestamp = endDate ? Math.floor(new Date(endDate).getTime() / 1000) : undefined;
 
         const effectiveUserAttrib = userAttrib ?? withingsClient.getDefaultUserAttrib();
-        const measurements = await withingsClient.getMeasures(
+        const result = await withingsClient.getMeasuresWithPagination(
           measureTypes,
           startTimestamp,
           endTimestamp,
-          effectiveUserAttrib
+          effectiveUserAttrib,
+          limit,
+          offset
         );
+
+        // Format response with pagination info
+        const response = {
+          measurements: result.measures,
+          pagination: result.pagination
+        };
+
+        const paginationText = result.pagination.more
+          ? `\n\n📄 Pagination: Showing ${result.pagination.total_returned} results (offset: ${result.pagination.offset || 0}, limit: ${result.pagination.limit || 'none'}). More data available - use offset=${(result.pagination.offset || 0) + result.pagination.total_returned} for next page.`
+          : `\n\n📄 Pagination: Showing ${result.pagination.total_returned} results (offset: ${result.pagination.offset || 0}, limit: ${result.pagination.limit || 'none'}). No more data available.`;
 
         return {
           content: [
             {
               type: 'text',
-              text: JSON.stringify(measurements, null, 2),
+              text: JSON.stringify(response, null, 2) + paginationText,
             },
           ],
         };

@@ -18,10 +18,21 @@ export declare class WithingsClient {
     exchangeCodeForToken(code: string): Promise<void>;
     refreshAccessToken(): Promise<void>;
     makeApiRequest(endpoint: string, params: Record<string, any>): Promise<any>;
-    getMeasures(meastype?: number[], startdate?: number, enddate?: number, userAttrib?: number): Promise<WithingsMeasureGroup[]>;
+    getMeasures(meastype?: number[], startdate?: number, enddate?: number, userAttrib?: number, limit?: number, offset?: number): Promise<WithingsMeasureGroup[]>;
+    getMeasuresWithPagination(meastype?: number[], startdate?: number, enddate?: number, userAttrib?: number, limit?: number, offset?: number): Promise<{
+        measures: WithingsMeasureGroup[];
+        pagination: {
+            limit?: number;
+            offset?: number;
+            more?: boolean;
+            total_returned: number;
+        };
+    }>;
     getLatestWeight(userAttrib?: number, unitSystem?: 'metric' | 'imperial'): Promise<{
         value: number;
         unit: string;
+        date: string;
+        timestamp: number;
     } | null>;
     getBodyComposition(userAttrib?: number, unitSystem?: 'metric' | 'imperial'): Promise<Record<string, number | string>>;
     getAvailableUsers(): Promise<{

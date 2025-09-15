@@ -205,7 +205,9 @@ export class WithingsClient {
     meastype?: number[],
     startdate?: number,
     enddate?: number,
-    userAttrib?: number
+    userAttrib?: number,
+    limit?: number,
+    offset?: number
   ): Promise<WithingsMeasureGroup[]> {
     const params: Record<string, any> = {
       action: 'getmeas',
@@ -219,6 +221,12 @@ export class WithingsClient {
     }
     if (enddate) {
       params.enddate = enddate;
+    }
+    if (limit !== undefined) {
+      params.limit = limit;
+    }
+    if (offset !== undefined) {
+      params.offset = offset;
     }
 
     const response: WithingsApiResponse = await this.makeApiRequest('/measure', params);
@@ -237,7 +245,67 @@ export class WithingsClient {
     return measureGroups;
   }
 
-  async getLatestWeight(userAttrib?: number, unitSystem?: 'metric' | 'imperial'): Promise<{ value: number; unit: string } | null> {
+  async getMeasuresWithPagination(
+    meastype?: number[],
+    startdate?: number,
+    enddate?: number,
+    userAttrib?: number,
+    limit?: number,
+    offset?: number
+  ): Promise<{
+    measures: WithingsMeasureGroup[];
+    pagination: {
+      limit?: number;
+      offset?: number;
+      more?: boolean;
+      total_returned: number;
+    };
+  }> {
+    const params: Record<string, any> = {
+      action: 'getmeas',
+    };
+
+    if (meastype && meastype.length > 0) {
+      params.meastype = meastype.join(',');
+    }
+    if (startdate) {
+      params.startdate = startdate;
+    }
+    if (enddate) {
+      params.enddate = enddate;
+    }
+    if (limit !== undefined) {
+      params.limit = limit;
+    }
+    if (offset !== undefined) {
+      params.offset = offset;
+    }
+
+    const response: WithingsApiResponse = await this.makeApiRequest('/measure', params);
+
+    if (response.status !== 0) {
+      throw new Error(`API Error: ${response.error || 'Unknown error'}`);
+    }
+
+    let measureGroups = response.body?.measuregrps || [];
+
+    // Filter by user attribution if specified
+    if (userAttrib !== undefined) {
+      measureGroups = measureGroups.filter(group => group.attrib === userAttrib);
+    }
+
+    return {
+      measures: measureGroups,
+      pagination: {
+        limit,
+        offset,
+        more: response.body?.more || false,
+        total_returned: measureGroups.length,
+      },
+    };
+  }
+
+  async getLatestWeight(userAttrib?: number, unitSystem?: 'metric' | 'imperial'): Promise<{ value: number; unit: string; date: string; timestamp: number } | null> {
     const effectiveUserAttrib = userAttrib ?? this.getDefaultUserAttrib();
     const measures = await this.getMeasures([MeasureType.WEIGHT], undefined, undefined, effectiveUserAttrib);
 
@@ -253,7 +321,14 @@ export class WithingsClient {
     }
 
     const weightKg = weightMeasure.value * Math.pow(10, weightMeasure.unit);
-    return this.convertWeight(weightKg, unitSystem);
+    const weightData = this.convertWeight(weightKg, unitSystem);
+
+    return {
+      value: weightData.value,
+      unit: weightData.unit,
+      date: new Date(latestGroup.date * 1000).toISOString(),
+      timestamp: latestGroup.date
+    };
   }
 
   async getBodyComposition(userAttrib?: number, unitSystem?: 'metric' | 'imperial'): Promise<Record<string, number | string>> {
@@ -350,6 +425,7 @@ export class WithingsClient {
     if (Object.keys(latestMeasurements).length > 0) {
       const mostRecentDate = Math.max(...Object.values(latestMeasurements).map(m => m.date));
       composition.measurement_date = new Date(mostRecentDate * 1000).toISOString();
+      composition.measurement_timestamp = mostRecentDate;
     }
 
     return composition;
