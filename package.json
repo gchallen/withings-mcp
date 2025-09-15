@@ -2,9 +2,12 @@
   "name": "withings-mcp",
   "version": "1.0.0",
   "description": "MCP client for retrieving data from Withings smart scale",
-  "main": "src/index.ts",
-  "bin": "./src/cli.ts",
+  "main": "bin/index.js",
+  "bin": "./bin/cli.js",
   "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "postinstall": "npm run build",
     "dev": "bun src/index.ts",
     "start": "bun src/index.ts",
     "login": "bun src/login.ts",
@@ -40,6 +43,7 @@
     "@modelcontextprotocol/sdk": "^1.18.0",
     "axios": "^1.12.2",
     "dotenv": "^17.2.2",
-    "open": "^10.2.0"
+    "open": "^10.2.0",
+    "typescript": "^5.9.2"
   }
 }

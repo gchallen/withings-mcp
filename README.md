@@ -7,20 +7,32 @@ MCP (Model Context Protocol) client for retrieving data from Withings smart scal
 1. Create a Withings Developer account at https://developer.withings.com/
 2. Create an application to get your Client ID and Client Secret
 3. Set up your redirect URI (default: `http://localhost:3000/callback`)
-4. [Bun](https://bun.sh/) runtime (required)
+4. [Bun](https://bun.sh/) runtime (recommended) or Node.js
 
 ## Installation
 
 ### Install from GitHub
 
+With Bun (recommended):
 ```bash
 bun install git+https://github.com/gchallen/withings-mcp.git
 ```
 
+Or with npm:
+```bash
+npm install git+https://github.com/gchallen/withings-mcp.git
+```
+
 ### Or run directly from GitHub
 
+With Bun (recommended):
 ```bash
 bunx --bun gchallen/withings-mcp
+```
+
+Or with npm/npx:
+```bash
+npx gchallen/withings-mcp
 ```
 
 ## Setup
@@ -47,6 +59,8 @@ bun login
 Or directly from GitHub:
 ```bash
 bunx --bun gchallen/withings-mcp login
+# or
+npx gchallen/withings-mcp login
 ```
 
 Or after cloning:
@@ -54,6 +68,8 @@ Or after cloning:
 git clone https://github.com/gchallen/withings-mcp.git
 cd withings-mcp
 bun login
+# or
+npm run login
 ```
 
 This will:
@@ -72,11 +88,13 @@ The package provides a unified CLI with the following commands:
 ```bash
 # Run OAuth authorization (one-time setup)
 bunx --bun gchallen/withings-mcp login
+# or
+npx gchallen/withings-mcp login
 
 # Start the MCP server (default command)
 bunx --bun gchallen/withings-mcp
-# or explicitly
-bunx --bun gchallen/withings-mcp server
+# or
+npx gchallen/withings-mcp
 ```
 
 ## Available Tools
@@ -108,12 +126,32 @@ Parameters:
 
 Add the server to your Claude Desktop configuration:
 
+With Bun (recommended):
 ```json
 {
   "mcpServers": {
     "withings": {
       "command": "bunx",
       "args": ["--bun", "gchallen/withings-mcp"],
+      "env": {
+        "WITHINGS_CLIENT_ID": "your_client_id",
+        "WITHINGS_CLIENT_SECRET": "your_client_secret",
+        "WITHINGS_REDIRECT_URI": "http://localhost:3000/callback",
+        "WITHINGS_ACCESS_TOKEN": "your_access_token",
+        "WITHINGS_REFRESH_TOKEN": "your_refresh_token"
+      }
+    }
+  }
+}
+```
+
+Or with npm:
+```json
+{
+  "mcpServers": {
+    "withings": {
+      "command": "npx",
+      "args": ["gchallen/withings-mcp"],
       "env": {
         "WITHINGS_CLIENT_ID": "your_client_id",
         "WITHINGS_CLIENT_SECRET": "your_client_secret",
@@ -137,23 +175,28 @@ For local development:
 ```bash
 git clone https://github.com/gchallen/withings-mcp.git
 cd withings-mcp
-bun install
+bun install  # or npm install
+```
+
+### Build
+```bash
+bun run build  # or npm run build
 ```
 
 ### Run in development mode
 ```bash
-bun dev
+bun dev        # or npm run dev
 ```
 
 ### Run tests
 ```bash
-bun test
+bun test       # or npm test
 ```
 
 ### Lint and format
 ```bash
-bun lint
-bun format
+bun lint       # or npm run lint
+bun format     # or npm run format
 ```
 
 ## License

@@ -5,7 +5,7 @@ const command = args[0];
 
 if (command === 'login') {
   // Run the login tool
-  import('./login.ts').then((module) => {
+  import('./login.js').then((module) => {
     // The login module runs its main function on import
   }).catch((error) => {
     console.error('Failed to run login command:', error);
@@ -13,7 +13,7 @@ if (command === 'login') {
   });
 } else if (command === 'server' || !command) {
   // Run the MCP server (default)
-  import('./index.ts').then((module) => {
+  import('./index.js').then((module) => {
     // The index module runs the server on import
   }).catch((error) => {
     console.error('Failed to run MCP server:', error);
