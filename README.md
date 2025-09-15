@@ -185,7 +185,7 @@ cd withings-mcp
 bun install  # or npm install
 ```
 
-### Build
+### Build (Optional - Bun runs TypeScript directly)
 ```bash
 bun run build  # or npm run build
 ```

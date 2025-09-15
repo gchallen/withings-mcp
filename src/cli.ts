@@ -5,7 +5,7 @@ const command = args[0];
 
 if (command === 'auth') {
   // Run the auth tool
-  import('./auth.js').then((module) => {
+  import('./auth.ts').then((module) => {
     // The auth module runs its main function on import
   }).catch((error) => {
     console.error('Failed to run auth command:', error);
@@ -13,7 +13,7 @@ if (command === 'auth') {
   });
 } else if (command === 'server' || !command) {
   // Run the MCP server (default)
-  import('./index.js').then((module) => {
+  import('./index.ts').then((module) => {
     // The index module runs the server on import
   }).catch((error) => {
     console.error('Failed to run MCP server:', error);
