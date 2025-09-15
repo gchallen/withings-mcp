@@ -80,6 +80,10 @@ function createAuthServer(): AuthServer {
 }
 
 async function saveTokensToEnv(accessToken: string, refreshToken: string): Promise<void> {
+  if (!accessToken || !refreshToken) {
+    throw new Error('Invalid tokens received - cannot save empty tokens');
+  }
+
   try {
     const envContent = await fs.readFile('.env', 'utf-8');
     let updatedContent = envContent;
@@ -105,8 +109,10 @@ async function saveTokensToEnv(accessToken: string, refreshToken: string): Promi
     }
 
     await fs.writeFile('.env', updatedContent);
+    console.log('✅ Successfully updated existing .env file');
   } catch (error) {
     // If .env doesn't exist, create it
+    console.log('📝 Creating new .env file...');
     const envContent = `WITHINGS_CLIENT_ID=${process.env.WITHINGS_CLIENT_ID || ''}
 WITHINGS_CLIENT_SECRET=${process.env.WITHINGS_CLIENT_SECRET || ''}
 WITHINGS_REDIRECT_URI=${process.env.WITHINGS_REDIRECT_URI || 'http://localhost:3000/callback'}
@@ -114,6 +120,7 @@ WITHINGS_ACCESS_TOKEN=${accessToken}
 WITHINGS_REFRESH_TOKEN=${refreshToken}
 `;
     await fs.writeFile('.env', envContent);
+    console.log('✅ Successfully created new .env file');
   }
 }
 
@@ -162,15 +169,24 @@ async function main() {
     // Exchange code for tokens
     await client.exchangeCodeForToken(code);
 
-    // Save tokens to .env file
-    await saveTokensToEnv(
-      client.getAccessToken() || '',
-      client.getRefreshToken() || ''
-    );
+    // Get tokens and verify they exist
+    const accessToken = client.getAccessToken();
+    const refreshToken = client.getRefreshToken();
 
-    console.log('💾 Tokens saved to .env file');
+    console.log('🔍 Token verification:');
+    console.log(`Access token received: ${accessToken ? 'Yes' : 'No'}`);
+    console.log(`Refresh token received: ${refreshToken ? 'Yes' : 'No'}`);
+
+    if (!accessToken || !refreshToken) {
+      throw new Error('Failed to receive tokens from Withings API');
+    }
+
+    // Save tokens to .env file
+    await saveTokensToEnv(accessToken, refreshToken);
+
     console.log('🎉 Authorization complete!\n');
     console.log('You can now use the Withings MCP server.');
+    console.log('Your tokens have been saved to the .env file.');
 
   } catch (error: any) {
     console.error('❌ Authorization failed:', error.message);

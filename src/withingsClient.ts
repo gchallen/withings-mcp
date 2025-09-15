@@ -15,6 +15,7 @@ export class WithingsClient {
   private configPath: string;
   private baseUrl = 'https://wbsapi.withings.net';
   private authUrl = 'https://account.withings.com';
+  private tokenUrl = 'https://wbsapi.withings.net/v2/oauth2';
 
   constructor(config: WithingsConfig) {
     this.config = config;
@@ -64,7 +65,7 @@ export class WithingsClient {
       response_type: 'code',
       client_id: this.config.clientId,
       redirect_uri: this.config.redirectUri,
-      scope: 'user.metrics,user.activity',
+      scope: 'user.info,user.metrics,user.activity',
       state: Math.random().toString(36).substring(7),
     });
     return `${this.authUrl}/oauth2_user/authorize2?${params}`;
@@ -72,6 +73,7 @@ export class WithingsClient {
 
   async exchangeCodeForToken(code: string): Promise<void> {
     const params = new URLSearchParams({
+      action: 'requesttoken',
       grant_type: 'authorization_code',
       client_id: this.config.clientId,
       client_secret: this.config.clientSecret,
@@ -79,19 +81,37 @@ export class WithingsClient {
       redirect_uri: this.config.redirectUri,
     });
 
-    const response = await axios.post<TokenResponse>(
-      `${this.baseUrl}/v2/oauth2`,
-      params.toString(),
-      {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }
-    );
+    try {
+      const response = await axios.post<TokenResponse>(
+        this.tokenUrl,
+        params.toString(),
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+          },
+        }
+      );
 
-    this.config.accessToken = response.data.access_token;
-    this.config.refreshToken = response.data.refresh_token;
-    await this.saveTokens();
+      if (response.data.status !== 0) {
+        throw new Error(`Withings API error: ${response.data.error || 'Unknown error'}`);
+      }
+
+      if (!response.data.body?.access_token || !response.data.body?.refresh_token) {
+        throw new Error(`Invalid token response: ${JSON.stringify(response.data)}`);
+      }
+
+      this.config.accessToken = response.data.body.access_token;
+      this.config.refreshToken = response.data.body.refresh_token;
+
+      await this.saveTokens();
+    } catch (error: any) {
+      if (error.response) {
+        console.error('Withings API error:', error.response.status, error.response.data);
+        throw new Error(`Withings API error: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
+    }
   }
 
   async refreshAccessToken(): Promise<void> {
@@ -100,6 +120,7 @@ export class WithingsClient {
     }
 
     const params = new URLSearchParams({
+      action: 'requesttoken',
       grant_type: 'refresh_token',
       client_id: this.config.clientId,
       client_secret: this.config.clientSecret,
@@ -107,17 +128,26 @@ export class WithingsClient {
     });
 
     const response = await axios.post<TokenResponse>(
-      `${this.baseUrl}/v2/oauth2`,
+      this.tokenUrl,
       params.toString(),
       {
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
+          'Accept': 'application/json',
         },
       }
     );
 
-    this.config.accessToken = response.data.access_token;
-    this.config.refreshToken = response.data.refresh_token;
+    if (response.data.status !== 0) {
+      throw new Error(`Withings API error: ${response.data.error || 'Unknown error'}`);
+    }
+
+    if (!response.data.body?.access_token || !response.data.body?.refresh_token) {
+      throw new Error(`Invalid refresh token response: ${JSON.stringify(response.data)}`);
+    }
+
+    this.config.accessToken = response.data.body.access_token;
+    this.config.refreshToken = response.data.body.refresh_token;
     await this.saveTokens();
   }
 

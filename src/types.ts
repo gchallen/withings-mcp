@@ -37,12 +37,19 @@ export interface WithingsApiResponse {
   error?: string;
 }
 
-export interface TokenResponse {
+export interface WithingsTokenBody {
+  userid: string;
   access_token: string;
   refresh_token: string;
-  expires_in: number;
   scope: string;
+  expires_in: number;
   token_type: string;
+}
+
+export interface TokenResponse {
+  status: number;
+  body?: WithingsTokenBody;
+  error?: string;
 }
 
 export enum MeasureType {
