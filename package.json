@@ -5,9 +5,9 @@
   "main": "src/index.ts",
   "bin": "./src/cli.ts",
   "scripts": {
-    "dev": "bun run src/index.ts",
-    "start": "bun run src/index.ts",
-    "auth": "bun run src/auth.ts",
+    "dev": "bun src/index.ts",
+    "start": "bun src/index.ts",
+    "login": "bun src/login.ts",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts",
     "test": "bun test",

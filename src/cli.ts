@@ -3,12 +3,12 @@
 const args = process.argv.slice(2);
 const command = args[0];
 
-if (command === 'auth') {
-  // Run the auth tool
-  import('./auth.ts').then((module) => {
-    // The auth module runs its main function on import
+if (command === 'login') {
+  // Run the login tool
+  import('./login.ts').then((module) => {
+    // The login module runs its main function on import
   }).catch((error) => {
-    console.error('Failed to run auth command:', error);
+    console.error('Failed to run login command:', error);
     process.exit(1);
   });
 } else if (command === 'server' || !command) {
@@ -24,6 +24,6 @@ if (command === 'auth') {
   console.error('Usage:');
   console.error('  withings-mcp        # Start MCP server (default)');
   console.error('  withings-mcp server # Start MCP server');
-  console.error('  withings-mcp auth   # Run OAuth authorization');
+  console.error('  withings-mcp login  # Run OAuth authorization');
   process.exit(1);
 }

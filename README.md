@@ -41,19 +41,19 @@ Before using the MCP server, you need to authorize access to your Withings data.
 
 With Bun:
 ```bash
-bun run auth
+bun login
 ```
 
 Or directly from GitHub:
 ```bash
-bunx --bun gchallen/withings-mcp auth
+bunx --bun gchallen/withings-mcp login
 ```
 
 Or after cloning:
 ```bash
 git clone https://github.com/gchallen/withings-mcp.git
 cd withings-mcp
-bun run auth
+bun login
 ```
 
 This will:
@@ -71,7 +71,7 @@ The package provides a unified CLI with the following commands:
 
 ```bash
 # Run OAuth authorization (one-time setup)
-bunx --bun gchallen/withings-mcp auth
+bunx --bun gchallen/withings-mcp login
 
 # Start the MCP server (default command)
 bunx --bun gchallen/withings-mcp
@@ -142,7 +142,7 @@ bun install
 
 ### Run in development mode
 ```bash
-bun run dev
+bun dev
 ```
 
 ### Run tests
@@ -152,8 +152,8 @@ bun test
 
 ### Lint and format
 ```bash
-bun run lint
-bun run format
+bun lint
+bun format
 ```
 
 ## License
