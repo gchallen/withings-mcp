@@ -5,8 +5,6 @@
   "main": "src/index.ts",
   "bin": "./src/cli.ts",
   "scripts": {
-    "build": "bun run build:tsc",
-    "build:tsc": "tsc",
     "dev": "bun run src/index.ts",
     "start": "bun run src/index.ts",
     "auth": "bun run src/auth.ts",
@@ -36,10 +34,7 @@
     "eslint": "^9.35.0",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
-    "nodemon": "^3.1.10",
-    "prettier": "^3.6.2",
-    "tsx": "^4.20.5",
-    "typescript": "^5.9.2"
+    "prettier": "^3.6.2"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.0",
