@@ -145,31 +145,53 @@ export class WithingsClient {
             });
             // Check if Withings API returned an authentication error
             // Status 401 in the response body means invalid/expired access token
-            if (response.data.status === 401) {
-                // Try to refresh the token
-                await this.refreshAccessToken();
-                // Retry the request with the new access token
-                const retryResponse = await axios.get(`${this.baseUrl}${endpoint}`, {
-                    headers: {
-                        Authorization: `Bearer ${this.config.accessToken}`,
-                    },
-                    params,
-                });
-                return retryResponse.data;
+            // Also check for "invalid_token" in the error message
+            if (response.data.status === 401 ||
+                (response.data.error && response.data.error.includes('invalid_token'))) {
+                try {
+                    // Try to refresh the token
+                    await this.refreshAccessToken();
+                    // Retry the request with the new access token
+                    const retryResponse = await axios.get(`${this.baseUrl}${endpoint}`, {
+                        headers: {
+                            Authorization: `Bearer ${this.config.accessToken}`,
+                        },
+                        params,
+                    });
+                    return retryResponse.data;
+                }
+                catch (refreshError) {
+                    // If refresh fails, it might mean the refresh token is also invalid
+                    // Check if it's a refresh token error
+                    if (refreshError.message.includes('invalid refresh_token') ||
+                        refreshError.message.includes('Invalid Params')) {
+                        throw new Error('Both access and refresh tokens are invalid. Please run "bun login" to re-authenticate.');
+                    }
+                    throw refreshError;
+                }
             }
             return response.data;
         }
         catch (error) {
             // Also handle HTTP 401 status (though Withings typically uses status in body)
             if (error.response?.status === 401) {
-                await this.refreshAccessToken();
-                const response = await axios.get(`${this.baseUrl}${endpoint}`, {
-                    headers: {
-                        Authorization: `Bearer ${this.config.accessToken}`,
-                    },
-                    params,
-                });
-                return response.data;
+                try {
+                    await this.refreshAccessToken();
+                    const response = await axios.get(`${this.baseUrl}${endpoint}`, {
+                        headers: {
+                            Authorization: `Bearer ${this.config.accessToken}`,
+                        },
+                        params,
+                    });
+                    return response.data;
+                }
+                catch (refreshError) {
+                    if (refreshError.message.includes('invalid refresh_token') ||
+                        refreshError.message.includes('Invalid Params')) {
+                        throw new Error('Both access and refresh tokens are invalid. Please run "bun login" to re-authenticate.');
+                    }
+                    throw refreshError;
+                }
             }
             throw error;
         }
