@@ -18,7 +18,7 @@ bun run build
 bun dev
 
 # Run OAuth login flow
-bun login
+bun tokens
 
 # Run tests
 bun test
@@ -57,7 +57,7 @@ bun format
 
 ### Token Management Flow
 
-1. Tokens are obtained via OAuth login (`bun login`)
+1. Tokens are obtained via OAuth login (`bun tokens`)
 2. Saved to `.env` file as `WITHINGS_ACCESS_TOKEN` and `WITHINGS_REFRESH_TOKEN`
 3. MCP server loads tokens from environment or `~/.withings-mcp/tokens.json`
 4. When access token expires (invalid_token error), `makeApiRequest` should:
