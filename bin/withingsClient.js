@@ -143,9 +143,24 @@ export class WithingsClient {
                 },
                 params,
             });
+            // Check if Withings API returned an authentication error
+            // Status 401 in the response body means invalid/expired access token
+            if (response.data.status === 401) {
+                // Try to refresh the token
+                await this.refreshAccessToken();
+                // Retry the request with the new access token
+                const retryResponse = await axios.get(`${this.baseUrl}${endpoint}`, {
+                    headers: {
+                        Authorization: `Bearer ${this.config.accessToken}`,
+                    },
+                    params,
+                });
+                return retryResponse.data;
+            }
             return response.data;
         }
         catch (error) {
+            // Also handle HTTP 401 status (though Withings typically uses status in body)
             if (error.response?.status === 401) {
                 await this.refreshAccessToken();
                 const response = await axios.get(`${this.baseUrl}${endpoint}`, {
