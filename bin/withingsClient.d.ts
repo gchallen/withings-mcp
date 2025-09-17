@@ -5,9 +5,12 @@ export declare class WithingsClient {
     private baseUrl;
     private authUrl;
     private tokenUrl;
+    private cachedAccessToken?;
+    private accessTokenExpiry?;
     constructor(config: WithingsConfig);
     loadTokens(): Promise<void>;
     saveTokens(): Promise<void>;
+    getValidAccessToken(): Promise<string>;
     getAccessToken(): string | undefined;
     getRefreshToken(): string | undefined;
     getDefaultUserAttrib(): number | undefined;

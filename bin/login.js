@@ -65,19 +65,16 @@ function createAuthServer() {
     });
     return { server, promise };
 }
-async function saveTokensToEnv(accessToken, refreshToken) {
-    if (!accessToken || !refreshToken) {
-        throw new Error('Invalid tokens received - cannot save empty tokens');
+async function saveTokensToEnv(refreshToken) {
+    if (!refreshToken) {
+        throw new Error('Invalid refresh token received - cannot save empty token');
     }
     try {
         const envContent = await fs.readFile('.env', 'utf-8');
         let updatedContent = envContent;
-        // Update or add access token
+        // Remove access token if it exists (we no longer store it)
         if (updatedContent.includes('WITHINGS_ACCESS_TOKEN=')) {
-            updatedContent = updatedContent.replace(/WITHINGS_ACCESS_TOKEN=.*/, `WITHINGS_ACCESS_TOKEN=${accessToken}`);
-        }
-        else {
-            updatedContent += `\nWITHINGS_ACCESS_TOKEN=${accessToken}`;
+            updatedContent = updatedContent.replace(/WITHINGS_ACCESS_TOKEN=.*\n?/, '');
         }
         // Update or add refresh token
         if (updatedContent.includes('WITHINGS_REFRESH_TOKEN=')) {
@@ -95,7 +92,6 @@ async function saveTokensToEnv(accessToken, refreshToken) {
         const envContent = `WITHINGS_CLIENT_ID=${process.env.WITHINGS_CLIENT_ID || ''}
 WITHINGS_CLIENT_SECRET=${process.env.WITHINGS_CLIENT_SECRET || ''}
 WITHINGS_REDIRECT_URI=${process.env.WITHINGS_REDIRECT_URI || 'http://localhost:3000/callback'}
-WITHINGS_ACCESS_TOKEN=${accessToken}
 WITHINGS_REFRESH_TOKEN=${refreshToken}
 `;
         await fs.writeFile('.env', envContent);
@@ -137,19 +133,20 @@ async function main() {
         // Exchange code for tokens
         await client.exchangeCodeForToken(code);
         // Get tokens and verify they exist
-        const accessToken = client.getAccessToken();
+        const accessToken = client.getAccessToken(); // This should be cached now
         const refreshToken = client.getRefreshToken();
         console.log('🔍 Token verification:');
-        console.log(`Access token received: ${accessToken ? 'Yes' : 'No'}`);
+        console.log(`Access token cached: ${accessToken ? 'Yes' : 'No'}`);
         console.log(`Refresh token received: ${refreshToken ? 'Yes' : 'No'}`);
-        if (!accessToken || !refreshToken) {
-            throw new Error('Failed to receive tokens from Withings API');
+        if (!refreshToken) {
+            throw new Error('Failed to receive refresh token from Withings API');
         }
-        // Save tokens to .env file
-        await saveTokensToEnv(accessToken, refreshToken);
+        // Save only refresh token to .env file (access tokens are cached in memory)
+        await saveTokensToEnv(refreshToken);
         console.log('🎉 Authorization complete!\n');
         console.log('You can now use the Withings MCP server.');
-        console.log('Your tokens have been saved to the .env file.');
+        console.log('Your refresh token has been saved to the .env file.');
+        console.log('Access tokens will be generated automatically as needed.');
     }
     catch (error) {
         console.error('❌ Authorization failed:', error.message);
