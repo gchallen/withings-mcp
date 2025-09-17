@@ -3,12 +3,12 @@
 const args = process.argv.slice(2);
 const command = args[0];
 
-if (command === 'login') {
-  // Run the login tool
+if (command === 'tokens') {
+  // Run the token authorization tool
   import('./login.js').then((module) => {
     // The login module runs its main function on import
   }).catch((error) => {
-    console.error('Failed to run login command:', error);
+    console.error('Failed to run tokens command:', error);
     process.exit(1);
   });
 } else if (command === 'server' || !command) {
@@ -24,6 +24,6 @@ if (command === 'login') {
   console.error('Usage:');
   console.error('  withings-mcp        # Start MCP server (default)');
   console.error('  withings-mcp server # Start MCP server');
-  console.error('  withings-mcp login  # Run OAuth authorization');
+  console.error('  withings-mcp tokens # Run OAuth authorization');
   process.exit(1);
 }

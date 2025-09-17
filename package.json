@@ -8,7 +8,7 @@
     "build": "tsc",
     "dev": "bun src/index.ts",
     "start": "bun src/index.ts",
-    "login": "bun src/login.ts",
+    "tokens": "bun src/login.ts",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts",
     "test": "bun test",
