@@ -23,21 +23,28 @@ export class WithingsClient {
   }
 
   async loadTokens(): Promise<void> {
-    // Load from environment variables first, then fallback to file
+    // Try to load from file first (gets updated during token refresh)
+    // Fall back to environment variables if file doesn't exist
+    try {
+      const data = await fs.readFile(this.configPath, 'utf-8');
+      const tokens = JSON.parse(data);
+      if (tokens.accessToken && tokens.refreshToken) {
+        this.config.accessToken = tokens.accessToken;
+        this.config.refreshToken = tokens.refreshToken;
+        return;
+      }
+    } catch (error) {
+      // File doesn't exist or is invalid, continue to environment variables
+    }
+
+    // Fallback to environment variables (for initial setup)
     if (process.env.WITHINGS_ACCESS_TOKEN && process.env.WITHINGS_REFRESH_TOKEN) {
       this.config.accessToken = process.env.WITHINGS_ACCESS_TOKEN;
       this.config.refreshToken = process.env.WITHINGS_REFRESH_TOKEN;
       return;
     }
 
-    try {
-      const data = await fs.readFile(this.configPath, 'utf-8');
-      const tokens = JSON.parse(data);
-      this.config.accessToken = tokens.accessToken;
-      this.config.refreshToken = tokens.refreshToken;
-    } catch (error) {
-      console.log('No saved tokens found');
-    }
+    console.log('No saved tokens found');
   }
 
   async saveTokens(): Promise<void> {
