@@ -17,19 +17,22 @@ export class WithingsClient {
   private authUrl = 'https://account.withings.com';
   private tokenUrl = 'https://wbsapi.withings.net/v2/oauth2';
 
+  // In-memory access token cache
+  private cachedAccessToken?: string;
+  private accessTokenExpiry?: Date;
+
   constructor(config: WithingsConfig) {
     this.config = config;
     this.configPath = path.join(process.env.HOME || '~', '.withings-mcp', 'tokens.json');
   }
 
   async loadTokens(): Promise<void> {
-    // Try to load from file first (gets updated during token refresh)
+    // Try to load refresh token from file first (gets updated during token refresh)
     // Fall back to environment variables if file doesn't exist
     try {
       const data = await fs.readFile(this.configPath, 'utf-8');
       const tokens = JSON.parse(data);
-      if (tokens.accessToken && tokens.refreshToken) {
-        this.config.accessToken = tokens.accessToken;
+      if (tokens.refreshToken) {
         this.config.refreshToken = tokens.refreshToken;
         return;
       }
@@ -38,13 +41,12 @@ export class WithingsClient {
     }
 
     // Fallback to environment variables (for initial setup)
-    if (process.env.WITHINGS_ACCESS_TOKEN && process.env.WITHINGS_REFRESH_TOKEN) {
-      this.config.accessToken = process.env.WITHINGS_ACCESS_TOKEN;
+    if (process.env.WITHINGS_REFRESH_TOKEN) {
       this.config.refreshToken = process.env.WITHINGS_REFRESH_TOKEN;
       return;
     }
 
-    console.log('No saved tokens found');
+    console.log('No saved refresh token found');
   }
 
   async saveTokens(): Promise<void> {
@@ -53,14 +55,29 @@ export class WithingsClient {
     await fs.writeFile(
       this.configPath,
       JSON.stringify({
-        accessToken: this.config.accessToken,
         refreshToken: this.config.refreshToken,
       })
     );
   }
 
+  async getValidAccessToken(): Promise<string> {
+    // Check if we have a cached access token that hasn't expired
+    if (this.cachedAccessToken && this.accessTokenExpiry && this.accessTokenExpiry > new Date()) {
+      return this.cachedAccessToken;
+    }
+
+    // No valid cached token, refresh it
+    await this.refreshAccessToken();
+
+    if (!this.cachedAccessToken) {
+      throw new Error('Failed to obtain valid access token');
+    }
+
+    return this.cachedAccessToken;
+  }
+
   getAccessToken(): string | undefined {
-    return this.config.accessToken;
+    return this.cachedAccessToken;
   }
 
   getRefreshToken(): string | undefined {
@@ -130,7 +147,11 @@ export class WithingsClient {
         throw new Error(`Invalid token response: ${JSON.stringify(response.data)}`);
       }
 
-      this.config.accessToken = response.data.body.access_token;
+      // Cache access token in memory with expiration (expires in 3 hours, cache for 2.5 hours to be safe)
+      this.cachedAccessToken = response.data.body.access_token;
+      this.accessTokenExpiry = new Date(Date.now() + 2.5 * 60 * 60 * 1000); // 2.5 hours from now
+
+      // Store only the refresh token persistently
       this.config.refreshToken = response.data.body.refresh_token;
 
       await this.saveTokens();
@@ -175,20 +196,23 @@ export class WithingsClient {
       throw new Error(`Invalid refresh token response: ${JSON.stringify(response.data)}`);
     }
 
-    this.config.accessToken = response.data.body.access_token;
+    // Cache access token in memory with expiration (expires in 3 hours, cache for 2.5 hours to be safe)
+    this.cachedAccessToken = response.data.body.access_token;
+    this.accessTokenExpiry = new Date(Date.now() + 2.5 * 60 * 60 * 1000); // 2.5 hours from now
+
+    // Update refresh token and save only that to persistent storage
     this.config.refreshToken = response.data.body.refresh_token;
     await this.saveTokens();
   }
 
   async makeApiRequest(endpoint: string, params: Record<string, any>): Promise<any> {
-    if (!this.config.accessToken) {
-      throw new Error('Not authenticated. Please authorize first.');
-    }
+    // Ensure we have a valid access token (will refresh if needed)
+    const accessToken = await this.getValidAccessToken();
 
     try {
       const response = await axios.get(`${this.baseUrl}${endpoint}`, {
         headers: {
-          Authorization: `Bearer ${this.config.accessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
         params,
       });
@@ -206,7 +230,7 @@ export class WithingsClient {
           // Retry the request with the new access token
           const retryResponse = await axios.get(`${this.baseUrl}${endpoint}`, {
             headers: {
-              Authorization: `Bearer ${this.config.accessToken}`,
+              Authorization: `Bearer ${this.cachedAccessToken}`,
             },
             params,
           });
@@ -218,7 +242,7 @@ export class WithingsClient {
           if (refreshError.message.includes('invalid refresh_token') ||
               refreshError.message.includes('Invalid Params')) {
             throw new Error(
-              'Both access and refresh tokens are invalid. Please run "bun login" to re-authenticate.'
+              'Both access and refresh tokens are invalid. Please run "bun tokens" to re-authenticate.'
             );
           }
           throw refreshError;
@@ -233,7 +257,7 @@ export class WithingsClient {
           await this.refreshAccessToken();
           const response = await axios.get(`${this.baseUrl}${endpoint}`, {
             headers: {
-              Authorization: `Bearer ${this.config.accessToken}`,
+              Authorization: `Bearer ${this.cachedAccessToken}`,
             },
             params,
           });
@@ -242,7 +266,7 @@ export class WithingsClient {
           if (refreshError.message.includes('invalid refresh_token') ||
               refreshError.message.includes('Invalid Params')) {
             throw new Error(
-              'Both access and refresh tokens are invalid. Please run "bun login" to re-authenticate.'
+              'Both access and refresh tokens are invalid. Please run "bun tokens" to re-authenticate.'
             );
           }
           throw refreshError;
